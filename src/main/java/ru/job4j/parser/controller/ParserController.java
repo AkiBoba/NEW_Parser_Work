@@ -11,7 +11,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-public class ParserController{
+public class ParserController {
 
     private final ParserUtil parserUtil;
 
