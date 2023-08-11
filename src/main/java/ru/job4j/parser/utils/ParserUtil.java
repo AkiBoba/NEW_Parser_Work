@@ -15,7 +15,6 @@ import java.util.List;
 @Component
 public class ParserUtil {
     public static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.2 (KHTML, like Gecko) Chrome/15.0.874.120 Safari/535.2";
-//    public static final String USER_AGENT = "Mozilla/5.0";
 
     public List<String> getLinks(String url) {
         List<String> resultLinks = new ArrayList<>();
