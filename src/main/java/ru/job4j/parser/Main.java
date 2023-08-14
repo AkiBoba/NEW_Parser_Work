@@ -10,11 +10,12 @@ public class Main {
     public static void main(String[] args) {
 
         final AutooptParserUtil aoparserUtil = new AutooptParserUtil();
-        String url = "https://www.autoopt.ru/auto/catalog";
+        String url = "https://www.autoopt.ru/catalog/042932-kolco_045_050_30_gost_9833_73";
 //        String url = "https://www.autoopt.ru/auto/catalog/truck";
         SpringApplication.run(Main.class, args);
         System.out.println("Go to http://localhost:8080/index");
-        aoparserUtil.getLinks(url);
+        aoparserUtil.getProducktsInfo(url);
+//        aoparserUtil.getLinks(url);
 //        aoparserUtil.getElement(url);
     }
 }
