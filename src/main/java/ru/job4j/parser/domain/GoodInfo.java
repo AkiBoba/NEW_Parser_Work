@@ -5,36 +5,45 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Column;
+import org.springframework.data.relational.core.mapping.Table;
 
 @Getter
 @Setter
 @NoArgsConstructor
-//@Entity
-//@Table(name = "goods")
+@Table("alliance_goods")
 public class GoodInfo {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column(columnDefinition = "article")
+    @Column("article")
     private String article;
-    @Column(columnDefinition = "name")
+    @Column("name")
     private String name;
-    @Column(columnDefinition = "description")
+    @Column("description")
     private String description;
-    @Column(columnDefinition = "width")
+    @Column("width")
     private String width;
-    @Column(columnDefinition = "height")
+    @Column("height")
     private String height;
-    @Column(columnDefinition = "length")
+    @Column("length")
     private String length;
-    @Column(columnDefinition = "weight")
+    @Column("weight")
     private String weight;
 
-    public GoodInfo(String width, String height, String length, String weight) {
+    public GoodInfo(String article, String name, String description, String width, String height, String length, String weight) {
+        this.article = article;
+        this.name = name;
+        this.description = description;
         this.width = width;
         this.height = height;
         this.length = length;
         this.weight = weight;
+    }
+
+    public GoodInfo(String article, String name, String description) {
+        this.article = article;
+        this.name = name;
+        this.description = description;
     }
 }
