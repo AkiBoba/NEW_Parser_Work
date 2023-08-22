@@ -27,8 +27,8 @@ public class AutooptParserUtil {
      * @param url
      * @return список адресов каталогов
      */
-    public List<String> getLinks(String url) {
-        List<String> links = new ArrayList<>();
+    public Set<String> getLinks(String url) {
+        Set<String> links = new HashSet<>();
         try {
             Document doc = Jsoup.connect(url).timeout(30000).userAgent(USER_AGENT).get();
             List<Element> list = doc.getElementsByAttributeValue("class", "brand-item");
@@ -49,7 +49,7 @@ public class AutooptParserUtil {
      * @param urls
      * @return список адресов
      */
-    public Set<String> parseByCatsLinks(List<String> urls) {
+    public Set<String> parseByCatsLinks(Set<String> urls) {
         Set<String> links = new HashSet<>();
         for (String url: urls) {
             try {
@@ -89,27 +89,6 @@ public class AutooptParserUtil {
         return links;
     }
 
-    Set<String> goodsLinks = new HashSet<>();
-
-    /** Метод парсит страницы urls и получает ссылки на каждый товар на странице
-     * @param urls
-     * @return список адресов товаров
-     */
-    public Set<String> getProducktsLinks(Set<String> urls) {
-        for (String url: urls) {
-            try {
-                Document doc = Jsoup.connect(url).timeout(30000).userAgent(USER_AGENT).get();
-                List<Element> list = doc.getElementsByAttributeValue("class", "n-catalog-item relative grid-item n-catalog-item__product");
-                list.forEach(element -> goodsLinks.add("https://www.autoopt.ru" + element.getElementsByAttributeValue("class", "n-catalog-item__name-link actions name-popover").attr("href")));
-            } catch (IOException e) {
-                log.error(String.valueOf(e));
-            }
-        }
-        log.info("goodsLinks {}", goodsLinks.size());
-        getProductsInfo(goodsLinks);
-        return goodsLinks;
-    }
-
     Set<String> pageLinks = new HashSet<>();
 
     /** Метод парсит страницы urls и получает ссылки на каждый pagination__link
@@ -136,6 +115,27 @@ public class AutooptParserUtil {
         return pageLinks;
     }
 
+    Set<String> goodsLinks = new HashSet<>();
+
+    /** Метод парсит страницы urls и получает ссылки на каждый товар на странице
+     * @param urls
+     * @return список адресов товаров
+     */
+    public Set<String> getProducktsLinks(Set<String> urls) {
+        for (String url: urls) {
+            try {
+                Document doc = Jsoup.connect(url).timeout(30000).userAgent(USER_AGENT).get();
+                List<Element> list = doc.getElementsByAttributeValue("class", "n-catalog-item relative grid-item n-catalog-item__product");
+                list.forEach(element -> goodsLinks.add("https://www.autoopt.ru" + element.getElementsByAttributeValue("class", "n-catalog-item__name-link actions name-popover").attr("href")));
+            } catch (IOException e) {
+                log.error(String.valueOf(e));
+            }
+        }
+        log.info("goodsLinks {}", goodsLinks.size());
+        getProductsInfo(goodsLinks);
+        return goodsLinks;
+    }
+
     /** Метод парсит страницу url и получает ссылки на каждый pagination__link который выходит за границы старицы и не видим
      * @param url
      * @return список адресов страниц
@@ -160,7 +160,10 @@ public class AutooptParserUtil {
         return pageLinks;
     }
 
+    Long countgoodsExist = 0L;
+
     public void getProductsInfo(Set<String> urls) {
+        String code;
         String description;
         String article;
         String name;
@@ -174,6 +177,8 @@ public class AutooptParserUtil {
                 article = elements.isEmpty() ? "" : elements.get(0).text().replace("Артикул: ", "");
                 elements = doc.getElementsByAttributeValueContaining("class", "card-product-title");
                 name = elements.isEmpty() ? "" : elements.get(0).text();
+                elements = doc.getElementsByAttributeValueContaining("itemprop", "sku");
+                code = elements.isEmpty() ? "" : elements.get(0).text();
 
                 elements = doc.getElementsByTag("tr");
                 List<Elements> lengths = new ArrayList<>();
@@ -181,6 +186,7 @@ public class AutooptParserUtil {
                 List<Elements> lenghtList = lengths.stream().filter(e -> !e.isEmpty()).toList();
                 String lenght = !lenghtList.isEmpty() ?  lenghtList.get(0).stream().filter(e -> !e.text().equals("Длина, м")).toList().get(0).text().replace("Длина, м", "") : "";
                 GoodInfo good = new GoodInfo(
+                        code,
                         article,
                         name,
                         description,
@@ -192,6 +198,7 @@ public class AutooptParserUtil {
                 try {
                     repository.save(good);
                 } catch (Exception e) {
+                    countgoodsExist = countgoodsExist + 1;
 //                    log.info("Такая деталь уже записана в БД, article {}", good.getArticle());
 //                    repository.update(good.getDescription(), good.getWidth(), good.getHeight(), good.getLength(), good.getWeight(), good.getArticle(), good.getName());
                 }
@@ -199,7 +206,52 @@ public class AutooptParserUtil {
                 log.error(String.valueOf(e));
             }
         }
-        log.info("Парсинг введенного адреса завершен!");
+        log.info("Парсинг введенного адреса завершен! Совпадение ссылок {} шт", countgoodsExist);
+    }
+
+    public void getSingleProductsInfo(String url) {
+        String code;
+        String description;
+        String article;
+        String name;
+            try {
+//                log.info("url of good {}", url);
+                Element doc = Jsoup.connect(url).timeout(30000).userAgent(USER_AGENT).get();
+                List<Element> elements = doc.getElementsByAttributeValueContaining("itemprop", "description");
+                description = elements.isEmpty() ? "" : elements.get(0).text();
+                elements = doc.getElementsByAttributeValueContaining("class", "card-product-article");
+                article = elements.isEmpty() ? "" : elements.get(0).text().replace("Артикул: ", "");
+                elements = doc.getElementsByAttributeValueContaining("class", "card-product-title");
+                name = elements.isEmpty() ? "" : elements.get(0).text();
+                elements = doc.getElementsByAttributeValueContaining("itemprop", "sku");
+                code = elements.isEmpty() ? "" : elements.get(0).text();
+
+                elements = doc.getElementsByTag("tr");
+                List<Elements> lengths = new ArrayList<>();
+                elements.forEach(element -> lengths.add(element.getElementsMatchingText("Длина, м")));
+                List<Elements> lenghtList = lengths.stream().filter(e -> !e.isEmpty()).toList();
+                String lenght = !lenghtList.isEmpty() ?  lenghtList.get(0).stream().filter(e -> !e.text().equals("Длина, м")).toList().get(0).text().replace("Длина, м", "") : "";
+                GoodInfo good = new GoodInfo(
+                        code,
+                        article,
+                        name,
+                        description,
+                        doc.getElementsByAttributeValue("itemprop", "width").text(),
+                        doc.getElementsByAttributeValue("itemprop", "height").text(),
+                        lenght,
+                        doc.getElementsByAttributeValue("itemprop", "weight").text()
+                );
+                try {
+                    repository.save(good);
+                } catch (Exception e) {
+                    countgoodsExist = countgoodsExist + 1;
+//                    log.info("Такая деталь уже записана в БД, article {}", good.getArticle());
+//                    repository.update(good.getDescription(), good.getWidth(), good.getHeight(), good.getLength(), good.getWeight(), good.getArticle(), good.getName());
+                }
+            } catch (IOException e) {
+                log.error(String.valueOf(e));
+            }
+        log.info("Парсинг введенного адреса завершен! {}", countgoodsExist);
     }
 
     public String getProducktsDescription(String url) {

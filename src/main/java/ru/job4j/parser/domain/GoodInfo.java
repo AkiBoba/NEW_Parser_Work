@@ -12,10 +12,12 @@ import org.springframework.data.relational.core.mapping.Table;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table("alliance_goods")
+@Table("alliance_goods1")
 public class GoodInfo {
     @Id
     private Long id;
+    @Column("code")
+    private String code;
     @Column("article")
     private String article;
     @Column("name")
@@ -31,7 +33,14 @@ public class GoodInfo {
     @Column("weight")
     private String weight;
 
-    public GoodInfo(String article, String name, String description, String width, String height, String length, String weight) {
+    public GoodInfo(String article, String name, String description) {
+        this.article = article;
+        this.name = name;
+        this.description = description;
+    }
+
+    public GoodInfo(String code, String article, String name, String description, String width, String height, String length, String weight) {
+        this.code = code;
         this.article = article;
         this.name = name;
         this.description = description;
@@ -39,11 +48,5 @@ public class GoodInfo {
         this.height = height;
         this.length = length;
         this.weight = weight;
-    }
-
-    public GoodInfo(String article, String name, String description) {
-        this.article = article;
-        this.name = name;
-        this.description = description;
     }
 }

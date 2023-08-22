@@ -18,19 +18,15 @@ public class ParserController {
 
     private final AutooptParserUtil aoparserUtil;
 
-//    @PostMapping("/parser")
-//    public List<String> getList(Model model, @RequestParam String url) {
-//        log.info("Поступил запрос на парсинг сайта {}", url);
-//        return aoparserUtil.getLinks(url);
-//    }
-
     @PostMapping("/parser")
     public void getList(Model model, @RequestParam String url) {
         Set<String> urls = new HashSet<>();
+//        String url = "https://www.autoopt.ru/catalog/557946-bolt_m10h1_25h35_kamaz_vala_kardannogo_v_sbore_k_p__10_9_azotirovannaja_stal_megapower";
         urls.add(url);
         log.info("Поступил запрос на парсинг сайта {}", url);
-//        aoparserUtil.getProductsInfo(urls);
-        aoparserUtil.getLinks(url);
+//        aoparserUtil.getProductsInfo(url);
+//        aoparserUtil.getLinks(url);
+        aoparserUtil.parseByCatsLinks(urls);
     }
 
 }

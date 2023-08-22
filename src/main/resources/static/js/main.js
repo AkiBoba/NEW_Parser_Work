@@ -17,10 +17,25 @@ function parser(URL) {
             //     $('.form1').append(attr);
             //     $('#href').attr("href", link);
             //     })
-            alert('data')
+            alert('done')
             }
         });
     }
 
+});
+
+$(".btn-loadandsavegoods").click(function () {
+    console.log('load goods');
+    $.get("/goods", {}).done(function (data) {
+        if (data) {
+            window.location = '/downloadorderslfile/' + data;
+            swal({
+                title: "Файл загружен",
+                type: 'success'
+            });
+        } else {
+            alert('Что то пошло не так');
+        }
+    });
 });
 
