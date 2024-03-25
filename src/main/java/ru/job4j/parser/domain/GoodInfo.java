@@ -12,7 +12,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table("alliance_goods1")
+@Table("alliance_goods3")
 public class GoodInfo {
     @Id
     private Long id;

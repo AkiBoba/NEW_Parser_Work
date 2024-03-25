@@ -5,6 +5,7 @@ $(document).ready(function() {
    })
 
 function parser(URL) {
+    $('#preloader').removeAttr('hidden');
     $.ajax({
         url: '/parser',
         type: 'post',
@@ -17,6 +18,7 @@ function parser(URL) {
             //     $('.form1').append(attr);
             //     $('#href').attr("href", link);
             //     })
+            $('#preloader').hide(1000);
             alert('done')
             }
         });
@@ -26,7 +28,9 @@ function parser(URL) {
 
 $(".btn-loadandsavegoods").click(function () {
     console.log('load goods');
+    $('#preloader').removeAttr('hidden');
     $.get("/goods", {}).done(function (data) {
+        $('#preloader').hide(1000);
         if (data) {
             window.location = '/downloadorderslfile/' + data;
             swal({
@@ -38,4 +42,17 @@ $(".btn-loadandsavegoods").click(function () {
         }
     });
 });
+
+
+// $('.btn-usersinxls').click(function () {
+//     $.when(ajaxGet('/getUsersList'), $('#lex_preloader').removeAttr('hidden'))
+//         .done(function (data) {
+//             $('#lex_preloader').hide(1000);
+//             window.location = '/downloadgoodswithuncorrectedurlfile/' + data;
+//             swal({
+//                 title: "Файл сформирован",
+//                 type: 'success'
+//             });
+//         });
+// });
 

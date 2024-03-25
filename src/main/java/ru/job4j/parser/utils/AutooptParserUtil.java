@@ -11,10 +11,7 @@ import ru.job4j.parser.domain.GoodInfo;
 import ru.job4j.parser.repository.GoodInfoRepository;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Slf4j
 @Component
@@ -22,19 +19,20 @@ import java.util.Set;
 public class AutooptParserUtil {
     public static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.2 (KHTML, like Gecko) Chrome/15.0.874.120 Safari/535.2";
     private final GoodInfoRepository repository;
+    private final SaveGoodsInFileUtil util;
 
     /** Метод парсит страницу url и получает ссылки на все каталоги с этой страницы
      * @param url
      * @return список адресов каталогов
      */
-    public Set<String> getLinks(String url) {
-        Set<String> links = new HashSet<>();
+    public List<String> getLinks(String url) {
+        List<String> links = new ArrayList<>();
         try {
             Document doc = Jsoup.connect(url).timeout(30000).userAgent(USER_AGENT).get();
-            List<Element> list = doc.getElementsByAttributeValue("class", "brand-item");
+            List<Element> list = doc.getElementsByAttributeValue("class", "filter-item ng-star-inserted");
             list.forEach(element -> {
                 if (element != null) {
-                    links.add("https://www.autoopt.ru" + element.attr("href"));
+                    links.add("https://armtek.ru" + element.attr("href"));
                 }
             });
         } catch (IOException e) {
@@ -49,20 +47,23 @@ public class AutooptParserUtil {
      * @param urls
      * @return список адресов
      */
-    public Set<String> parseByCatsLinks(Set<String> urls) {
-        Set<String> links = new HashSet<>();
-        for (String url: urls) {
+    public List<String> parseByCatsLinks(List<String> urls) {
+        List<String> links = new ArrayList<>();
+        for (String url : urls) {
             try {
                 Document doc = Jsoup.connect(url).timeout(30000).userAgent(USER_AGENT).get();
-                Element element = doc.getElementById("disabled-btn-next");
-                if (element != null) {
-                    links.add("https://www.autoopt.ru" + element.attr("href"));
-                } else {
-                    links.add(url);
-                }
-            } catch (IOException e) {
-                log.error(String.valueOf(e));
+                List<Element> elements = doc.getElementsByAttributeValue("class", "brand-item ng-star-inserted");
+                elements.forEach(element -> {
+                    if (element != null) {
+                        links.add("https://armtek.ru" + element.attr("href"));
+                    } else {
+                        links.add(url);
+                    }
+                });
+            } catch (Exception e) {
+                log.error(e.getMessage());
             }
+//        getCountGoodsOfItems(links);
         }
         log.info("List of links on cat page {}", links.size());
         getElement(links);
@@ -73,13 +74,13 @@ public class AutooptParserUtil {
      * @param urls
      * @return список адресов товаров
      */
-    public Set<String> getElement(Set<String> urls) {
-        Set<String> links = new HashSet<>();
+    public List<String> getElement(List<String> urls) {
+        List<String> links = new ArrayList<>();
         for (String url: urls) {
             try {
                 Document doc = Jsoup.connect(url).timeout(30000).userAgent(USER_AGENT).get();
                 List<Element> list = doc.getElementsByAttributeValue("class", "catalog-brand-item");
-                list.forEach(element -> links.add("https://www.autoopt.ru" + element.getElementsMatchingText("Показать все запчасти").attr("href")));
+                list.forEach(element -> links.add("https://armtek.ru" + element.getElementsMatchingText("Показать все запчасти").attr("href")));
             } catch (IOException e) {
                 log.error(String.valueOf(e));
             }
@@ -95,15 +96,15 @@ public class AutooptParserUtil {
      * @param urls
      * @return список адресов страниц
      */
-    public Set<String> getAllPaginationLinks(Set<String> urls) {
+    public Set<String> getAllPaginationLinks(List<String> urls) {
         for (String url: urls) {
                 try {
                     Element doc = Jsoup.connect(url).timeout(30000).userAgent(USER_AGENT).get();
                     List<Element> list = doc.getElementsByAttributeValue("class", "pagination__item");
                     pageLinks.add(url);
-                    list.forEach(element -> pageLinks.add("https://www.autoopt.ru" + element.getElementsByAttributeValueStarting("class", "pagination__link").attr("href")));
+                    list.forEach(element -> pageLinks.add("https://armtek.ru" + element.getElementsByAttributeValueStarting("class", "pagination__link").attr("href")));
                     if (!doc.getElementsByAttributeValueContaining("class", "pagination__item next").isEmpty()) {
-                        url = "https://www.autoopt.ru" + list.get(list.size() - 1).getElementsByAttributeValueStarting("class", "pagination__link").attr("href");
+                        url = "https://armtek.ru" + list.get(list.size() - 1).getElementsByAttributeValueStarting("class", "pagination__link").attr("href");
                         getAllNextPaginationLinks(url);
                     }
                 } catch (IOException e) {
@@ -113,27 +114,6 @@ public class AutooptParserUtil {
         log.info("List of pagination links {}", pageLinks.size());
         getProducktsLinks(pageLinks);
         return pageLinks;
-    }
-
-    Set<String> goodsLinks = new HashSet<>();
-
-    /** Метод парсит страницы urls и получает ссылки на каждый товар на странице
-     * @param urls
-     * @return список адресов товаров
-     */
-    public Set<String> getProducktsLinks(Set<String> urls) {
-        for (String url: urls) {
-            try {
-                Document doc = Jsoup.connect(url).timeout(30000).userAgent(USER_AGENT).get();
-                List<Element> list = doc.getElementsByAttributeValue("class", "n-catalog-item relative grid-item n-catalog-item__product");
-                list.forEach(element -> goodsLinks.add("https://www.autoopt.ru" + element.getElementsByAttributeValue("class", "n-catalog-item__name-link actions name-popover").attr("href")));
-            } catch (IOException e) {
-                log.error(String.valueOf(e));
-            }
-        }
-        log.info("goodsLinks {}", goodsLinks.size());
-        getProductsInfo(goodsLinks);
-        return goodsLinks;
     }
 
     /** Метод парсит страницу url и получает ссылки на каждый pagination__link который выходит за границы старицы и не видим
@@ -147,12 +127,12 @@ public class AutooptParserUtil {
             try {
                 doc = Jsoup.connect(url).timeout(30000).userAgent(USER_AGENT).get();
                 list = doc.getElementsByAttributeValue("class", "pagination__item");
-                list.forEach(element -> pageLinks.add("https://www.autoopt.ru" + element.getElementsByAttributeValueStarting("class", "pagination__link").attr("href")));
+                list.forEach(element -> pageLinks.add("https://armtek.ru" + element.getElementsByAttributeValueStarting("class", "pagination__link").attr("href")));
             } catch (IOException e) {
                 log.error(String.valueOf(e));
             }
             if (!doc.getElementsByAttributeValueContaining("class", "pagination__item next").isEmpty()) {
-                url = "https://www.autoopt.ru" + list.get(list.size() - 1).getElementsByAttributeValueStarting("class", "pagination__link").attr("href");
+                url = "https://armtek.ru" + list.get(list.size() - 1).getElementsByAttributeValueStarting("class", "pagination__link").attr("href");
             } else {
                 url = null;
             }
@@ -160,13 +140,35 @@ public class AutooptParserUtil {
         return pageLinks;
     }
 
+    List<String> goodsLinks = new ArrayList<>();
+
+    /** Метод парсит страницы urls и получает ссылки на каждый товар на странице
+     * @param urls
+     * @return список адресов товаров
+     */
+    public List<String> getProducktsLinks(Set<String> urls) {
+        for (String url: urls) {
+            try {
+                Document doc = Jsoup.connect(url).timeout(30000).userAgent(USER_AGENT).get();
+                List<Element> list = doc.getElementsByAttributeValue("class", "n-catalog-item relative grid-item n-catalog-item__product");
+                list.forEach(element -> goodsLinks.add("https://armtek.ru" + element.getElementsByAttributeValue("class", "n-catalog-item__name-link actions name-popover").attr("href")));
+            } catch (IOException e) {
+                log.error(String.valueOf(e));
+            }
+        }
+        log.info("goodsLinks {}", goodsLinks.size());
+        getProductsInfo(goodsLinks);
+        return goodsLinks;
+    }
+
     Long countgoodsExist = 0L;
 
-    public void getProductsInfo(Set<String> urls) {
+    public void getProductsInfo(List<String> urls) {
         String code;
         String description;
         String article;
         String name;
+        List<GoodInfo> goods = new ArrayList<>();
         for (String url: urls) {
             try {
 //                log.info("url of good {}", url);
@@ -195,18 +197,48 @@ public class AutooptParserUtil {
                         lenght,
                         doc.getElementsByAttributeValue("itemprop", "weight").text()
                 );
-                try {
-                    repository.save(good);
-                } catch (Exception e) {
-                    countgoodsExist = countgoodsExist + 1;
-//                    log.info("Такая деталь уже записана в БД, article {}", good.getArticle());
-//                    repository.update(good.getDescription(), good.getWidth(), good.getHeight(), good.getLength(), good.getWeight(), good.getArticle(), good.getName());
+                goods.add(good);
+            } catch (IOException e) {
+                log.error(String.valueOf(e));
+            }
+        }
+        /**
+        log.info("запись товаров в excel {}", goods.size());
+        goods.sort(Comparator.comparing(GoodInfo::getCode));
+        util.goodsFile(goods);
+         */
+        try {
+                log.info("запись товаров в БД {}", goods.size());
+            repository.saveAll(goods);
+
+        } catch (Exception e) {
+            countgoodsExist = countgoodsExist + 1;
+            /**
+             log.info("Такая деталь уже записана в БД, article {}", good.getArticle());
+             repository.update(good.getDescription(), good.getWidth(), good.getHeight(), good.getLength(), good.getWeight(), good.getArticle(), good.getName());
+             */
+        }
+
+        log.info("Парсинг введенного адреса завершен! ошибок сохранения {} шт", countgoodsExist);
+    }
+
+    /** Метод парсит страницы urls и возвращает количество всех товаров
+     */
+    public void getCountGoodsOfItems(List<String> urls) {
+        int goodsSum = 0;
+        for (String url: urls) {
+            try {
+                Document doc = Jsoup.connect(url).timeout(30000).userAgent(USER_AGENT).get();
+                List<Element> list = doc.getElementsByAttributeValue("class", "catalog-brand-item");
+                for (Element element: list) {
+                    goodsSum += Integer.parseInt(element.getElementsByAttributeValue("class", "black").text().replace("(", "").replace(")", ""));
                 }
             } catch (IOException e) {
                 log.error(String.valueOf(e));
             }
         }
-        log.info("Парсинг введенного адреса завершен! Совпадение ссылок {} шт", countgoodsExist);
+        log.info(String.valueOf(goodsSum));
+        log.info("Count of links of goods {}", goodsSum);
     }
 
     public void getSingleProductsInfo(String url) {
@@ -241,6 +273,7 @@ public class AutooptParserUtil {
                         lenght,
                         doc.getElementsByAttributeValue("itemprop", "weight").text()
                 );
+
                 try {
                     repository.save(good);
                 } catch (Exception e) {

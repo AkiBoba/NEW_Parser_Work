@@ -4,10 +4,7 @@ import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
-import org.springframework.transaction.annotation.Transactional;
 import ru.job4j.parser.domain.GoodInfo;
-
-import java.util.Set;
 
 public interface GoodInfoRepository extends CrudRepository<GoodInfo, Long> {
 

@@ -8,6 +8,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Component;
 import ru.job4j.parser.config.TempFileConfigProps;
 import ru.job4j.parser.domain.GoodInfo;
+import ru.job4j.parser.domain.GoodInfoDTO;
 import ru.job4j.parser.repository.GoodInfoRepository;
 import ru.job4j.parser.service.OSValidator;
 
@@ -16,7 +17,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -28,10 +32,13 @@ public class SaveGoodsInFileUtil {
 
     public String goodsFile() {
 
-        log.info("Начинается формирование файла с заказами клиентов с сайта");
+        log.info("Начинается формирование файла ");
         SimpleDateFormat date = new SimpleDateFormat("HH:mm.dd.MM.yyyy");
         String path = Paths.get(getWorkFolder(), ("Характеристики_товаров" + ".xlsx")).toString();
         List<GoodInfo> goods = (List) repository.findAll();
+        Set<GoodInfoDTO> goodsSet = new HashSet<>();
+        goods.forEach(good -> goodsSet.add(new GoodInfoDTO(good.getCode(), good.getArticle(), good.getName(), good.getDescription(), good.getWidth(), good.getHeight(), good.getLength(), good.getWeight())));
+        log.info("Размер списка товаров {}", goodsSet.size());
 
         try (XSSFWorkbook book = new XSSFWorkbook()) {
 
@@ -49,7 +56,7 @@ public class SaveGoodsInFileUtil {
             row0.createCell(7).setCellValue("вес");
 
             int rowNum = 1;
-            for (GoodInfo good : goods) {
+            for (GoodInfoDTO good : goodsSet) {
                 Row row = sheet.createRow(rowNum++);
                 row.createCell(0).setCellValue(good.getCode());
                 row.createCell(1).setCellValue(good.getArticle());
