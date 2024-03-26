@@ -27,7 +27,10 @@ public class ParserController {
     @PostMapping("/parser")
     public void getList(@RequestParam String url) {
         log.info("Поступил запрос на парсинг сайта {}", url);
-        aoparserUtil.getLinks(url);
+//        aoparserUtil.getLinks(url);
+        List<String> urls = new ArrayList<>();
+        urls.add("https://armtek.ru/brand/aircomfort-175");
+        aoparserUtil.getAllPaginationLinks(urls);
     }
 
 }

@@ -21,6 +21,11 @@ public class AutooptParserUtil {
     private final GoodInfoRepository repository;
     private final SaveGoodsInFileUtil util;
 
+    /**
+     * Сет всех ссылок на страницы с товарами
+     */
+    Set<String> pageLinks = new HashSet<>();
+
     /** Метод парсит страницу url и получает ссылки на все каталоги с этой страницы
      * @param url
      * @return список адресов каталогов
@@ -39,7 +44,7 @@ public class AutooptParserUtil {
             log.error(String.valueOf(e));
         }
         log.info("List of links on 1st page {}", links.size());
-        parseByCatsLinks(links);
+        List<String> innerLinks = parseByCatsLinks(links);
         return links;
     }
 
@@ -66,7 +71,7 @@ public class AutooptParserUtil {
 //        getCountGoodsOfItems(links);
         }
         log.info("List of links on cat page {}", links.size());
-        getElement(links);
+//        getElement(links);
         return links;
     }
 
@@ -90,23 +95,54 @@ public class AutooptParserUtil {
         return links;
     }
 
-    Set<String> pageLinks = new HashSet<>();
+    /** Метод парсит страницы urls и получает ссылки на каждый pagination__link
+     * @param urls
+     * @return список адресов страниц
+     */
+//    public Set<String> getAllPaginationLinks(List<String> urls) {
+//        for (String url: urls) {
+//                try {
+//                    Element doc = Jsoup.connect(url).timeout(30000).userAgent(USER_AGENT).get();
+//                    List<Element> list = doc.getElementsByAttributeValue("class", "page-item-color-primary-size-md ng-star-inserted");
+//                    pageLinks.add(url);
+//                    list.forEach(element -> pageLinks.add("https://armtek.ru" + element.getElementsByAttributeValueStarting("class", "page-item font__subtitle1 ng-star-inserted").attr("href")));
+//                    List<Element> list2 = doc.getElementsByAttributeValueContaining("class", "sproit-ui-icon-button__wrapper sproit-ui-icon-button__link");
+//                    if (!list2.isEmpty()) {
+//                        List<Element> elements = list2.get(list2.size() - 1).getElementsByAttributeStarting("href");
+//                        url = "https://armtek.ru" + list2.get(list2.size() - 1).getElementsByAttributeStarting("href"); //', "pagination__link").attr("href");
+//                        getAllNextPaginationLinks(url);
+//                    }
+//                } catch (IOException e) {
+//                    log.error(String.valueOf(e));
+//                }
+//        }
+//        log.info("List of pagination links {}", pageLinks.size());
+//        getProducktsLinks(pageLinks);
+//        return pageLinks;
+//    }
 
     /** Метод парсит страницы urls и получает ссылки на каждый pagination__link
      * @param urls
      * @return список адресов страниц
      */
     public Set<String> getAllPaginationLinks(List<String> urls) {
+        List<String> elements = new ArrayList<>();
         for (String url: urls) {
                 try {
                     Element doc = Jsoup.connect(url).timeout(30000).userAgent(USER_AGENT).get();
-                    List<Element> list = doc.getElementsByAttributeValue("class", "pagination__item");
+
+                    List<Element> list = doc.getElementsByAttributeValue("class", "page-item-color-primary-size-md ng-star-inserted");
+
+                    list.forEach(element -> elements.add("https://armtek.ru" + element.getElementsByAttributeValueStarting("class", "page-item font__subtitle1 ng-star-inserted").attr("href")));
+
                     pageLinks.add(url);
-                    list.forEach(element -> pageLinks.add("https://armtek.ru" + element.getElementsByAttributeValueStarting("class", "pagination__link").attr("href")));
-                    if (!doc.getElementsByAttributeValueContaining("class", "pagination__item next").isEmpty()) {
-                        url = "https://armtek.ru" + list.get(list.size() - 1).getElementsByAttributeValueStarting("class", "pagination__link").attr("href");
-                        getAllNextPaginationLinks(url);
-                    }
+
+                    list.forEach(element -> elements.add(element.getElementsByAttributeValueContaining("class", "sproit-ui-icon-button__wrapper sproit-ui-icon-button__link").attr("href")));
+
+//                    List<Element> s = doc.getElementsByAttributeValue("icon", "sproit-icon__chevron-right");
+                    List<Element> s = doc.getElementsByAttributeValue("class", "right disabled hide");
+                    log.info("s = {}", s.size());
+
                 } catch (IOException e) {
                     log.error(String.valueOf(e));
                 }
