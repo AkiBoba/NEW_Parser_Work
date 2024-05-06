@@ -19,7 +19,7 @@ function parser(URL) {
             //     $('#href').attr("href", link);
             //     })
             $('#preloader').hide(1000);
-            alert('done')
+            // alert('done')
             }
         });
     }
